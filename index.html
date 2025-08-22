@@ -342,7 +342,7 @@
                     if (this.isPressing) {
                         this.start();
                     }
-                }, 5000); // 5秒間プレス
+                }, 4000); // 4秒
             }
     
             lightAllLEDs() {
@@ -354,7 +354,7 @@
     
             startPressAnimation() {
                 let currentDarkIndex = 0;
-                const pressTime = 5000;
+                const pressTime = 4000;
                 const rotations = 3;
                 const stepTime = pressTime / (rotations * 18);
                 
@@ -406,8 +406,8 @@
     
             startSpinSequence() {
                 this.currentRotatingIndex = 0;
-                const totalRotations = 5; // 高速回転の回転数
-                const rotationDuration = 1500; // 1.5秒
+                const totalRotations = 5;
+                const rotationDuration = 3000; // 3秒に変更
                 const totalSteps = totalRotations * 18;
                 const stepDuration = rotationDuration / totalSteps;
                 let stepCount = 0;
@@ -437,28 +437,25 @@
                 let currentIndex = this.currentRotatingIndex;
                 let stepCount = 0;
                 
-                const finalRotationCount = 3;
-                const totalSteps = 18 * finalRotationCount + randomTarget;
-                const totalDuration = 500; // 0.5秒
+                // 最終停止までのステップ数を計算
+                const finalSpinSteps = (18 - currentIndex + randomTarget) % 18 + 18 * 2;
                 
-                this.leds.forEach(led => {
-                    led.classList.remove('dim');
-                    led.classList.add('active');
-                });
+                const duration = 500; // 0.5秒
+                const stepInterval = duration / finalSpinSteps;
                 
                 this.finalInterval = setInterval(() => {
                     // 前のLEDを元に戻す
                     const prevIndex = (currentIndex - 1 + 18) % 18;
                     this.leds[prevIndex].classList.remove('dim');
                     this.leds[prevIndex].classList.add('active');
-    
+
                     // 現在のLEDを暗くする
                     this.leds[currentIndex].classList.remove('active');
                     this.leds[currentIndex].classList.add('dim');
-    
+
                     stepCount++;
                     
-                    if (stepCount >= totalSteps) {
+                    if (stepCount >= finalSpinSteps) {
                         clearInterval(this.finalInterval);
                         this.finalInterval = null;
                         this.leds[currentIndex].classList.remove('dim');
@@ -467,7 +464,7 @@
                     } else {
                         currentIndex = (currentIndex + 1) % 18;
                     }
-                }, totalDuration / totalSteps); // 減速ロジック
+                }, stepInterval);
             }
     
             showFinalResult(selectedIndex) {
