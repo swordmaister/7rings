@@ -342,7 +342,7 @@
                     if (this.isPressing) {
                         this.start();
                     }
-                }, 5000);
+                }, 4000); // 4秒に変更
             }
     
             lightAllLEDs() {
@@ -354,7 +354,7 @@
     
             startPressAnimation() {
                 let currentDarkIndex = 0;
-                const pressTime = 5000;
+                const pressTime = 4000; // 4秒に変更
                 const rotations = 3;
                 const stepTime = pressTime / (rotations * 18);
                 
@@ -407,7 +407,7 @@
             startSpinSequence() {
                 this.currentRotatingIndex = 0;
                 let rotationCount = 0;
-                const totalRotations = 3;
+                const totalRotations = 3; // プレス中と同じ回転数
                 const rotationDuration = 2000; // 2秒に変更
                 const totalSteps = totalRotations * 18;
                 const stepDuration = rotationDuration / totalSteps;
