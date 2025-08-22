@@ -244,15 +244,6 @@
         .led.blinking {
             animation: blink 0.6s ease-in-out infinite;
         }
-
-        .led.fading {
-            animation: fade 1s ease-in-out infinite alternate;
-        }
-        
-        @keyframes fade {
-            from { opacity: 0.2; }
-            to { opacity: 1; }
-        }
     
         .mode-controls { display: none; }
         .mode-labels { display: none; }
@@ -261,6 +252,8 @@
         .progress-ring { display: none; }
         .progress-ring-bg { display: none; }
         .progress-ring-fill { display: none; }
+        .mode-switch { display: none; }
+        #currentMode { display: none; }
     </style>
 </head>
 <body>
@@ -349,12 +342,12 @@
                     if (this.isPressing) {
                         this.start();
                     }
-                }, 4000);
+                }, 2000); // 2秒に変更
             }
     
             lightAllLEDs() {
                 this.leds.forEach(led => {
-                    led.classList.remove('dim', 'blinking', 'fading');
+                    led.classList.remove('dim', 'blinking');
                     led.classList.add('active');
                 });
                 this.device.classList.add('has-active-leds');
@@ -362,8 +355,8 @@
     
             startPressAnimation() {
                 let currentDarkIndex = 0;
-                const pressTime = 4000;
-                const rotations = 4;
+                const pressTime = 2000; // 2秒に変更
+                const rotations = 2; // 2回転に変更
                 const stepTime = pressTime / (rotations * 18);
                 
                 this.pressAnimationInterval = setInterval(() => {
@@ -414,14 +407,14 @@
     
             startSpinSequence() {
                 this.currentRotatingIndex = 0;
-                const totalRotations = 3;
-                const rotationDuration = 3000;
+                const totalRotations = 2; // 2回転に変更
+                const rotationDuration = 1500; // 1.5秒に変更
                 const totalSteps = totalRotations * 18;
                 const stepDuration = rotationDuration / totalSteps;
                 let stepCount = 0;
                 
                 this.leds.forEach(led => {
-                    led.classList.remove('dim', 'fading');
+                    led.classList.remove('dim');
                     led.classList.add('active');
                 });
                 
@@ -451,11 +444,11 @@
                 
                 const finalSpinSteps = (18 - currentIndex + randomTarget) % 18 + 18;
                 
-                const duration = 1500;
+                const duration = 1000; // 1秒に変更
                 const stepInterval = duration / finalSpinSteps;
                 
                 this.leds.forEach(led => {
-                    led.classList.remove('dim', 'fading');
+                    led.classList.remove('dim');
                     led.classList.add('active');
                 });
                 
@@ -483,7 +476,7 @@
     
             showFinalResult(selectedIndex) {
                 this.leds.forEach(led => {
-                    led.classList.remove('dim', 'fading');
+                    led.classList.remove('dim');
                     led.classList.add('active');
                 });
                 
@@ -522,7 +515,7 @@
                 }
                 
                 this.leds.forEach(led => {
-                    led.classList.remove('active', 'dim', 'blinking', 'fading');
+                    led.classList.remove('active', 'dim', 'blinking');
                     led.style.opacity = '1';
                 });
             }
