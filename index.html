@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>arcLedR2</title>
+    <style>
+        body {
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-touch-callout: none;
+            touch-action: manipulation;
+            margin: 0;
+            padding: 60px;
+            background: linear-gradient(135deg, #1e1e1e, #2a2a2a);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            font-family: 'Arial', sans-serif;
+            overflow: hidden;
+        }
+    
+        img {
+            -webkit-user-drag: none;
+            user-drag: none;
+        }
+    
+        .device-container {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            transition: transform 0.5s ease;
+            width: 400px;
+            height: 400px;
+            transform-origin: center center;
+        }
+    
+        .device {
+            position: relative;
+            width: 300px;
+            height: 300px;
+            margin: 50px;
+            background: radial-gradient(circle, #1a1a1a, #000);
+            border-radius: 50%;
+            box-shadow: 
+                0 0 30px rgba(0,0,0,0.8),
+                inset 0 0 20px rgba(255,255,255,0.1),
+                0 10px 30px rgba(0,0,0,0.6);
+            border: 3px solid #333;
+        }
+    
+        .led {
+            position: absolute;
+            width: 16px;
+            height: 25px;
+            border-radius: 3px;
+            background: transparent;
+            border: none;
+            transition: all 0.15s ease;
+            transform-origin: center center;
+            opacity: 0;
+        }
+        
+        .led::before {
+            content: '';
+            position: absolute;
+            top: -5px;
+            left: -2px;
+            width: 20px;
+            height: 35px;
+            border-radius: 4px;
+            background: transparent;
+            transition: all 0.3s ease;
+            opacity: 0;
+        }
+    
+        .led::after {
+            content: '';
+            position: absolute;
+            top: 2px;
+            left: 1px;
+            width: 14px;
+            height: 21px;
+            border-radius: 2px;
+            background: transparent;
+            transition: all 0.3s ease;
+            opacity: 0;
+        }
+    
+        .led.active {
+            background: currentColor;
+            border: 1px solid currentColor;
+            opacity: 1;
+            box-shadow: 
+                0 0 8px currentColor,
+                0 0 16px currentColor,
+                inset 0 0 4px rgba(255,255,255,0.4);
+            transition: all 0.1s ease;
+        }
+    
+        .led.active::before {
+            background: currentColor;
+            opacity: 0.2;
+            box-shadow: 
+                0 0 12px currentColor,
+                0 0 20px currentColor;
+            transition: all 0.1s ease;
+        }
+    
+        .led.active::after {
+            background: currentColor;
+            opacity: 1;
+            box-shadow: 
+                0 0 6px currentColor,
+                inset 0 0 3px rgba(255,255,255,0.6);
+            transition: all 0.1s ease;
+        }
+    
+        .led.dim {
+            background: #222;
+            border: 1px solid #333;
+            opacity: 0.15;
+            box-shadow: none;
+            transition: all 0.1s ease;
+        }
+    
+        .led.dim::before {
+            background: #222;
+            opacity: 0.1;
+            box-shadow: none;
+        }
+    
+        .led.dim::after {
+            background: #222;
+            opacity: 0.1;
+            box-shadow: none;
+        }
+    
+        .led.red { color: #ff4444; }
+        .led.orange { color: #ff8800; }
+        .led.yellow { color: #ffdd00; }
+        .led.green { color: #44ff44; }
+        .led.blue { color: #4488ff; }
+        .led.purple { color: #aa44ff; }
+    
+        .start-button {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%,-50%);
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            background: linear-gradient(145deg, #2a2a2a, #111);
+            border: 4px solid #444;
+            color: #fff;
+            font-size: 10px;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            transition: all 0.3s ease;
+            box-shadow: 
+                0 8px 20px rgba(0,0,0,0.7),
+                inset 0 3px 8px rgba(255,255,255,0.15),
+                0 0 0 2px rgba(0,255,136,0.2);
+            user-select: none;
+            backdrop-filter: blur(5px);
+        }
+    
+        .start-button:hover {
+            background: linear-gradient(145deg, #333, #1a1a1a);
+            box-shadow: 
+                0 6px 15px rgba(0,0,0,0.8),
+                inset 0 3px 8px rgba(255,255,255,0.2),
+                0 0 0 2px rgba(0,255,136,0.4);
+            transform: translate(-50%,-50%) translateX(3px);
+        }
+    
+        .start-button:active {
+            transform: translate(-50%,-50%) scale(0.95);
+        }
+    
+        .start-button:disabled {
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+    
+        .inner-glow {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 140px;
+            height: 140px;
+            transform: translate(-50%, -50%);
+            border-radius: 50%;
+            background: radial-gradient(circle, transparent 60%, rgba(0,0,0,0.3) 100%);
+            pointer-events: none;
+            transition: all 0.5s ease;
+        }
+    
+        .device.has-active-leds .inner-glow {
+            background: radial-gradient(circle, rgba(68, 255, 68, 0.1) 0%, transparent 70%);
+        }
+    
+        #rotation-button {
+            position: fixed;
+            bottom: 25px;
+            right: 25px;
+            width: 20px;
+            height: 20px;
+            background: rgba(255, 255, 255, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            z-index: 1000;
+            backdrop-filter: blur(5px);
+        }
+    
+        #rotation-button:hover {
+            background: rgba(255, 255, 255, 0.5);
+            border-color: rgba(255, 255, 255, 0.6);
+            transform: scale(1.2);
+        }
+    
+        #rotation-button:active {
+            transform: scale(0.9);
+            background: rgba(255, 255, 255, 0.7);
+        }
+    
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.2; }
+        }
+    
+        .led.blinking {
+            animation: blink 0.6s ease-in-out infinite;
+        }
+    
+        .mode-switch { display: none; }
+        .mode-indicator { display: none; }
+        .press-indicator { display: none; }
+        .progress-ring { display: none; }
+        .progress-ring-bg { display: none; }
+        .progress-ring-fill { display: none; }
+        #rotation-indicator { display: none; }
+        .progress-info { display: none; }
+        .mode-labels { display: none; }
+        .reset-button { display: none; }
+        .press-text { display: none; }
+    </style>
+</head>
+<body>
+    <div class="device-container" style="transform: translate(-50%, -50%) rotate(277.5deg);">
+        <div class="device" id="device">
+            <div class="inner-glow"></div>
+            <button class="start-button" id="startButton">
+                ●
+            </button>
+        </div>
+    </div>
+    
+    <div id="rotation-button" onclick="rotateScreen()"></div>
+    
+    <script>
+        class LEDSequence {
+            constructor() {
+                this.colors = ['red', 'orange', 'yellow', 'green', 'blue', 'purple'];
+                this.colorNames = ['赤', 'オレンジ', '黄色', '緑', '青', '紫'];
+                this.leds = [];
+                this.currentRotatingIndex = 0;
+                this.isRunning = false;
+                this.isPressing = false;
+                this.isFinished = false;
+                this.autoStartTimer = null;
+                this.pressAnimationInterval = null;
+                this.rotationInterval = null;
+                this.finalInterval = null;
+                this.startButton = document.getElementById('startButton');
+                this.device = document.getElementById('device');
+                this.init();
+            }
+    
+            init() {
+                this.createLEDs();
+                this.startButton.addEventListener('mousedown', (e) => this.startPress(e));
+                this.startButton.addEventListener('mouseup', (e) => this.endPress(e));
+                this.startButton.addEventListener('mouseleave', (e) => this.endPress(e));
+                this.startButton.addEventListener('touchstart', (e) => this.startPress(e));
+                this.startButton.addEventListener('touchend', (e) => this.endPress(e));
+                this.startButton.addEventListener('touchcancel', (e) => this.endPress(e));
+            }
+    
+            createLEDs() {
+                const radius = 115;
+                const centerX = 150;
+                const centerY = 150;
+                const startAngle = 225;
+                const totalAngle = 270;
+                const angleStep = totalAngle / 18;
+                
+                for (let i = 0; i < 18; i++) {
+                    const angle = startAngle + (i * angleStep);
+                    const colorIndex = Math.floor(i / 3);
+                    const color = this.colors[colorIndex];
+                    const led = document.createElement('div');
+                    led.className = `led ${color}`;
+                    const radians = (angle * Math.PI) / 180;
+                    const x = centerX + radius * Math.cos(radians) - 8;
+                    const y = centerY + radius * Math.sin(radians) - 12;
+                    led.style.left = x + 'px';
+                    led.style.top = y + 'px';
+                    const rotation = angle + 180;
+                    led.style.transform = `rotate(${rotation}deg)`;
+                    this.device.appendChild(led);
+                    this.leds.push(led);
+                }
+            }
+    
+            startPress(e) {
+                e.preventDefault();
+                
+                if (this.isRunning || this.isFinished) {
+                    this.reset();
+                    return;
+                }
+                
+                if (this.isPressing) return;
+                
+                this.isPressing = true;
+                this.startButton.style.background = 'linear-gradient(145deg, #00aa66, #006644)';
+                
+                this.lightAllLEDs();
+                this.startPressAnimation();
+                
+                this.autoStartTimer = setTimeout(() => {
+                    if (this.isPressing) {
+                        this.start();
+                    }
+                }, 7000);
+            }
+    
+            lightAllLEDs() {
+                this.leds.forEach(led => {
+                    led.classList.add('active');
+                });
+                this.device.classList.add('has-active-leds');
+            }
+    
+            startPressAnimation() {
+                let currentDarkIndex = 0;
+                const pressTime = 7000;
+                const rotations = 3;
+                const stepTime = pressTime / (rotations * 18);
+                
+                this.pressAnimationInterval = setInterval(() => {
+                    this.leds.forEach(led => {
+                        led.classList.remove('dim');
+                        led.classList.add('active');
+                    });
+                    
+                    this.leds[currentDarkIndex].classList.remove('active');
+                    this.leds[currentDarkIndex].classList.add('dim');
+                    
+                    currentDarkIndex = (currentDarkIndex + 1) % 18;
+                }, stepTime);
+            }
+    
+            endPress(e) {
+                e.preventDefault();
+                if (!this.isPressing) return;
+                
+                if (!this.isRunning) {
+                    this.reset();
+                } else {
+                    this.isPressing = false;
+                    this.startButton.style.background = '';
+                }
+            }
+    
+            start() {
+                if (this.isRunning) return;
+                
+                this.isRunning = true;
+                this.isPressing = false;
+                this.startButton.disabled = true;
+                this.startButton.style.background = '';
+                
+                if (this.pressAnimationInterval) {
+                    clearInterval(this.pressAnimationInterval);
+                    this.pressAnimationInterval = null;
+                }
+                
+                if (this.autoStartTimer) {
+                    clearTimeout(this.autoStartTimer);
+                    this.autoStartTimer = null;
+                }
+                
+                this.startSpinSequence();
+            }
+    
+            startSpinSequence() {
+                this.currentRotatingIndex = 0;
+                let rotationCount = 0;
+                const totalRotations = 3;
+                const rotationDuration = 4500;
+                const totalSteps = totalRotations * 18;
+                const stepDuration = rotationDuration / totalSteps;
+                
+                this.leds.forEach(led => {
+                    led.classList.remove('dim');
+                    led.classList.add('active');
+                });
+                
+                this.rotationInterval = setInterval(() => {
+                    const prevIndex = (this.currentRotatingIndex === 0 && rotationCount > 0) ? 17 : this.currentRotatingIndex - 1;
+                    if(prevIndex >= 0) {
+                         this.leds[prevIndex].classList.remove('dim');
+                         this.leds[prevIndex].classList.add('active');
+                    }
+                    
+                    this.leds[this.currentRotatingIndex].classList.remove('active');
+                    this.leds[this.currentRotatingIndex].classList.add('dim');
+                    
+                    this.currentRotatingIndex++;
+                    
+                    if (this.currentRotatingIndex >= 18) {
+                        this.currentRotatingIndex = 0;
+                        rotationCount++;
+                        
+                        if (rotationCount >= totalRotations) {
+                            clearInterval(this.rotationInterval);
+                            this.rotationInterval = null;
+                            this.leds[17].classList.remove('dim');
+                            this.leds[17].classList.add('active');
+                            this.finalSpin();
+                        }
+                    }
+                }, stepDuration);
+            }
+    
+            finalSpin() {
+                const randomTarget = Math.floor(Math.random() * 18);
+                let currentIndex = 0;
+                let stepCount = 0;
+                const totalSteps = 18 * 3 + randomTarget + 1;
+                const stepDuration = 50;
+    
+                this.leds.forEach(led => {
+                    led.classList.remove('dim');
+                    led.classList.add('active');
+                });
+                
+                this.finalInterval = setInterval(() => {
+                    if (stepCount > 0) {
+                        const prevIndex = (currentIndex === 0) ? 17 : currentIndex - 1;
+                        this.leds[prevIndex].classList.remove('dim');
+                        this.leds[prevIndex].classList.add('active');
+                    }
+                    
+                    this.leds[currentIndex].classList.remove('active');
+                    this.leds[currentIndex].classList.add('dim');
+                    
+                    stepCount++;
+                    
+                    if (stepCount >= totalSteps) {
+                        clearInterval(this.finalInterval);
+                        this.finalInterval = null;
+                        this.leds[currentIndex].classList.remove('dim');
+                        this.leds[currentIndex].classList.add('active');
+                        this.showFinalResult(currentIndex);
+                    } else {
+                        currentIndex = (currentIndex + 1) % 18;
+                    }
+                }, stepDuration);
+            }
+    
+            showFinalResult(selectedIndex) {
+                this.leds.forEach(led => {
+                    led.classList.remove('dim');
+                    led.classList.add('active');
+                });
+                
+                this.leds[selectedIndex].classList.add('blinking');
+                
+                this.isRunning = false;
+                this.isFinished = true;
+                this.startButton.disabled = false;
+            }
+    
+            reset() {
+                this.isPressing = false;
+                this.isRunning = false;
+                this.isFinished = false;
+                this.startButton.disabled = false;
+                this.startButton.style.background = '';
+                this.device.classList.remove('has-active-leds');
+                
+                if (this.pressAnimationInterval) {
+                    clearInterval(this.pressAnimationInterval);
+                    this.pressAnimationInterval = null;
+                }
+                
+                if (this.autoStartTimer) {
+                    clearTimeout(this.autoStartTimer);
+                    this.autoStartTimer = null;
+                }
+    
+                if (this.rotationInterval) {
+                    clearInterval(this.rotationInterval);
+                    this.rotationInterval = null;
+                }
+                if (this.finalInterval) {
+                    clearInterval(this.finalInterval);
+                    this.finalInterval = null;
+                }
+                
+                this.leds.forEach(led => {
+                    led.classList.remove('active', 'dim', 'blinking');
+                    led.style.opacity = '1';
+                });
+            }
+        }
+    
+        let deviceRotation = 277.5;
+    
+        function rotateScreen() {
+            deviceRotation += 45;
+            
+            const deviceContainer = document.querySelector('.device-container');
+            deviceContainer.style.transform = `translate(-50%, -50%) rotate(${deviceRotation}deg)`;
+            
+            const rotationButton = document.getElementById('rotation-button');
+            rotationButton.style.background = 'rgba(255, 255, 255, 0.8)';
+            rotationButton.style.borderColor = 'rgba(255, 255, 255, 0.9)';
+            rotationButton.style.transform = 'scale(1.3)';
+            
+            setTimeout(() => {
+                rotationButton.style.background = 'rgba(255, 255, 255, 0.3)';
+                rotationButton.style.borderColor = 'rgba(255, 255, 255, 0.4)';
+                rotationButton.style.transform = 'scale(1)';
+            }, 200);
+        }
+    
+        document.addEventListener('keydown', function(event) {
+            switch(event.key.toLowerCase()) {
+                case ' ':
+                    event.preventDefault();
+                    rotateScreen();
+                    break;
+                case 'escape':
+                    if (window.ledSequence) {
+                        window.ledSequence.reset();
+                    }
+                    break;
+            }
+        });
+    
+        window.addEventListener('DOMContentLoaded', () => {
+            window.ledSequence = new LEDSequence();
+        });
+    </script>
+</body>
+</html>
