@@ -28,54 +28,23 @@
             -webkit-user-drag: none;
             user-drag: none;
         }
-    
-        .mode-controls {
-            position: absolute;
-            top: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            display: flex;
-            align-items: center;
-            gap: 20px;
-            z-index: 1000;
-        }
-
-        .mode-labels {
-            font-size: 14px;
-            color: #aaa;
-            display: flex;
-            align-items: center;
-        }
-
-        #modeSwitch {
-            background: #444;
-            color: #fff;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 20px;
-            cursor: pointer;
-            transition: background 0.3s ease;
-        }
-
-        #modeSwitch:hover {
-            background: #555;
-        }
 
         .device-container {
-            position: relative;
-            width: 400px;
-            height: 400px;
-            margin-top: 50px;
-            transform-origin: center center;
-        }
-    
-        .device {
             position: absolute;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
+            transition: transform 0.5s ease;
+            width: 400px;
+            height: 400px;
+            transform-origin: center center;
+        }
+    
+        .device {
+            position: relative;
             width: 300px;
             height: 300px;
+            margin: 50px;
             background: radial-gradient(circle, #1a1a1a, #000);
             border-radius: 50%;
             box-shadow: 
@@ -285,6 +254,8 @@
             to { opacity: 1; }
         }
     
+        .mode-controls { display: none; }
+        .mode-labels { display: none; }
         .reset-button { display: none; }
         .press-text { display: none; }
         .progress-ring { display: none; }
@@ -293,13 +264,6 @@
     </style>
 </head>
 <body>
-    <div class="mode-controls">
-        <button id="modeSwitch">パターン切り替え</button>
-        <div class="mode-labels">
-            現在のパターン：<span id="currentMode">1</span>
-        </div>
-    </div>
-    
     <div class="device-container" style="transform: translate(-50%, -50%) rotate(277.5deg);">
         <div class="device" id="device">
             <div class="inner-glow"></div>
@@ -326,9 +290,6 @@
                 this.finalInterval = null;
                 this.startButton = document.getElementById('startButton');
                 this.device = document.getElementById('device');
-                this.modeSwitch = document.getElementById('modeSwitch');
-                this.currentModeDisplay = document.getElementById('currentMode');
-                this.currentMode = 1;
                 this.init();
             }
     
@@ -340,7 +301,6 @@
                 this.startButton.addEventListener('touchstart', (e) => this.startPress(e));
                 this.startButton.addEventListener('touchend', (e) => this.endPress(e));
                 this.startButton.addEventListener('touchcancel', (e) => this.endPress(e));
-                this.modeSwitch.addEventListener('click', () => this.switchMode());
             }
     
             createLEDs() {
@@ -368,12 +328,6 @@
                     this.leds.push(led);
                 }
             }
-
-            switchMode() {
-                this.currentMode = (this.currentMode % 10) + 1;
-                this.currentModeDisplay.textContent = this.currentMode;
-                this.reset();
-            }
     
             startPress(e) {
                 e.preventDefault();
@@ -391,77 +345,36 @@
                 this.lightAllLEDs();
                 this.startPressAnimation();
                 
-                const [pressTime, rotations] = this.getPressParams();
                 this.autoStartTimer = setTimeout(() => {
                     if (this.isPressing) {
                         this.start();
                     }
-                }, pressTime);
+                }, 4000);
             }
     
             lightAllLEDs() {
                 this.leds.forEach(led => {
                     led.classList.remove('dim', 'blinking', 'fading');
                     led.classList.add('active');
-                    if (this.currentMode === 5) { // フェードイン/アウトパターン
-                        led.classList.add('fading');
-                    }
                 });
-                if (this.currentMode === 9) { // 全点灯パターン
-                    this.leds.forEach(led => led.classList.add('active'));
-                    this.device.classList.add('has-active-leds');
-                } else if (this.currentMode === 10) { // 連続点滅パターン
-                     this.leds.forEach(led => led.classList.add('blinking'));
-                } else {
-                    this.device.classList.add('has-active-leds');
-                }
-            }
-
-            getPressParams() {
-                switch(this.currentMode) {
-                    case 1: return [5000, 3]; // ゆっくり
-                    case 2: return [4000, 4]; // 標準
-                    case 3: return [3000, 5]; // 高速
-                    case 4: return [4000, 4]; // ランダム停止
-                    case 5: return [4000, 4]; // フェードイン/アウト
-                    case 6: return [5000, 3]; // スローダウン
-                    case 7: return [4000, 4]; // 逆回転
-                    case 8: return [4000, 2]; // 交互点滅
-                    case 9: return [5000, 0]; // 全点灯
-                    case 10: return [4000, 0]; // 連続点滅
-                    default: return [4000, 4];
-                }
+                this.device.classList.add('has-active-leds');
             }
     
             startPressAnimation() {
-                const [pressTime, rotations] = this.getPressParams();
-                if (rotations === 0) return; // 全点灯・連続点滅パターンは回転なし
-
                 let currentDarkIndex = 0;
+                const pressTime = 4000;
+                const rotations = 4;
                 const stepTime = pressTime / (rotations * 18);
                 
                 this.pressAnimationInterval = setInterval(() => {
-                    if (this.currentMode === 8) { // 交互点滅
-                        this.leds.forEach(led => led.classList.remove('active', 'dim'));
-                        this.leds[currentDarkIndex].classList.add('dim');
-                        this.leds[(currentDarkIndex + 2) % 18].classList.add('dim');
-                        this.leds[(currentDarkIndex + 4) % 18].classList.add('dim');
-                        this.leds[(currentDarkIndex + 6) % 18].classList.add('dim');
-                        this.leds[(currentDarkIndex + 8) % 18].classList.add('dim');
-                        this.leds[(currentDarkIndex + 10) % 18].classList.add('dim');
-                        this.leds[(currentDarkIndex + 12) % 18].classList.add('dim');
-                        this.leds[(currentDarkIndex + 14) % 18].classList.add('dim');
-                        this.leds[(currentDarkIndex + 16) % 18].classList.add('dim');
-                        this.leds[(currentDarkIndex + 18) % 18].classList.add('dim');
-                    } else {
-                        this.leds.forEach(led => {
-                            led.classList.remove('dim');
-                            led.classList.add('active');
-                        });
+                    this.leds.forEach(led => {
+                        led.classList.remove('dim');
+                        led.classList.add('active');
+                    });
                     
-                        this.leds[currentDarkIndex].classList.remove('active');
-                        this.leds[currentDarkIndex].classList.add('dim');
-                    }
+                    this.leds[currentDarkIndex].classList.remove('active');
+                    this.leds[currentDarkIndex].classList.add('dim');
+                    
                     currentDarkIndex = (currentDarkIndex + 1) % 18;
                 }, stepTime);
             }
@@ -500,30 +413,27 @@
             }
     
             startSpinSequence() {
-                const [rotationDuration, totalRotations, reverse] = this.getSpinParams();
+                this.currentRotatingIndex = 0;
+                const totalRotations = 3;
+                const rotationDuration = 3000;
                 const totalSteps = totalRotations * 18;
                 const stepDuration = rotationDuration / totalSteps;
                 let stepCount = 0;
-
+                
                 this.leds.forEach(led => {
                     led.classList.remove('dim', 'fading');
-                    if (this.currentMode !== 9) {
-                        led.classList.add('active');
-                    }
+                    led.classList.add('active');
                 });
                 
                 this.rotationInterval = setInterval(() => {
-                    if (this.currentMode === 9 || this.currentMode === 10) { // 全点灯・連続点滅パターン
-                        // 何もしない
-                    } else {
-                        const prevIndex = (this.currentRotatingIndex + (reverse ? 1 : -1) + 18) % 18;
-                        this.leds[prevIndex].classList.remove('dim');
-                        this.leds[prevIndex].classList.add('active');
-                        this.leds[this.currentRotatingIndex].classList.remove('active');
-                        this.leds[this.currentRotatingIndex].classList.add('dim');
-                    }
+                    const prevIndex = (this.currentRotatingIndex - 1 + 18) % 18;
+                    this.leds[prevIndex].classList.remove('dim');
+                    this.leds[prevIndex].classList.add('active');
+
+                    this.leds[this.currentRotatingIndex].classList.remove('active');
+                    this.leds[this.currentRotatingIndex].classList.add('dim');
                     
-                    this.currentRotatingIndex = (this.currentRotatingIndex + (reverse ? -1 : 1) + 18) % 18;
+                    this.currentRotatingIndex = (this.currentRotatingIndex + 1) % 18;
                     stepCount++;
                     
                     if (stepCount >= totalSteps) {
@@ -533,22 +443,6 @@
                     }
                 }, stepDuration);
             }
-
-            getSpinParams() {
-                switch(this.currentMode) {
-                    case 1: return [3000, 2, false]; // ゆっくり
-                    case 2: return [2000, 4, false]; // 標準
-                    case 3: return [2000, 5, false]; // 高速
-                    case 4: return [3000, 3, false]; // ランダム停止
-                    case 5: return [3000, 3, false]; // フェードイン/アウト
-                    case 6: return [3000, 5, false]; // スローダウン
-                    case 7: return [3000, 3, true]; // 逆回転
-                    case 8: return [3000, 3, false]; // 交互点滅
-                    case 9: return [3000, 0, false]; // 全点灯
-                    case 10: return [3000, 0, false]; // 連続点滅
-                    default: return [2000, 4, false];
-                }
-            }
     
             finalSpin() {
                 const randomTarget = Math.floor(Math.random() * 18);
@@ -556,7 +450,8 @@
                 let stepCount = 0;
                 
                 const finalSpinSteps = (18 - currentIndex + randomTarget) % 18 + 18;
-                const duration = this.currentMode === 1 ? 2500 : 1500;
+                
+                const duration = 1500;
                 const stepInterval = duration / finalSpinSteps;
                 
                 this.leds.forEach(led => {
@@ -568,10 +463,10 @@
                     const prevIndex = (currentIndex - 1 + 18) % 18;
                     this.leds[prevIndex].classList.remove('dim');
                     this.leds[prevIndex].classList.add('active');
-    
+
                     this.leds[currentIndex].classList.remove('active');
                     this.leds[currentIndex].classList.add('dim');
-    
+
                     stepCount++;
                     
                     if (stepCount >= finalSpinSteps) {
