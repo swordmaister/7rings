@@ -34,7 +34,7 @@
             top: 20px;
             left: 20px;
             width: 250px;
-            background: rgba(0, 0, 0, 0.9);
+            background: rgba(0, 0, 0, 0.95);
             border-radius: 10px;
             padding: 15px;
             backdrop-filter: blur(10px);
@@ -54,7 +54,7 @@
 
         .settings-button {
             position: absolute;
-            bottom: 25px;
+            top: calc(50% + 120px);
             left: 50%;
             transform: translateX(-50%);
             width: 40px;
@@ -71,12 +71,6 @@
             z-index: 1001;
             transition: all 0.3s ease;
             backdrop-filter: blur(5px);
-        }
-        
-        @media (min-width: 769px) {
-            .settings-button {
-                bottom: 25px;
-            }
         }
         
         .settings-button:hover {
@@ -162,7 +156,7 @@
             cursor: pointer;
             transition: background 0.3s ease;
             font-size: 11px;
-            margin-top: 10px;
+            margin-bottom: 15px;
         }
 
         .reset-button:hover {
@@ -387,7 +381,6 @@
 
         .mode-controls { display: none; }
         .mode-labels { display: none; }
-        .reset-button { display: none; }
         .press-text { display: none; }
         .progress-ring { display: none; }
         .progress-ring-bg { display: none; }
@@ -407,18 +400,26 @@
     </style>
 </head>
 <body>
-    <div class="settings-button" onclick="toggleSettings(event)">⚙️</div>
-
+    <div class="device-container" style="transform: translate(-50%, -50%) rotate(277.5deg);">
+        <div class="device" id="device">
+            <div class="inner-glow"></div>
+            <button class="start-button" id="startButton">
+                ●
+            </button>
+        </div>
+        <div class="settings-button" onclick="toggleSettings(event)">⚙️</div>
+    </div>
+    
     <div class="controls-panel" id="controlsPanel">
         <button class="reset-button" onclick="window.ledSequence.resetToDefault()">設定をリセット</button>
         
         <div class="control-group">
             <h4>長押しアニメーション</h4>
             <label for="pressTime">長押しすべき時間 (秒)</label>
-            <input type="range" id="pressTime" min="0.5" max="7" step="0.5" value="2" data-default-value="2">
+            <input type="range" id="pressTime" min="0.5" max="7" step="0.5" value="5" data-default-value="5">
             <span class="control-value" id="pressTimeValue">
-                <span class="current-value">2秒</span>
-                <span class="default">(デフォルト: 2秒)</span>
+                <span class="current-value">5秒</span>
+                <span class="default">(デフォルト: 5秒)</span>
             </span>
         </div>
         
@@ -434,10 +435,10 @@
         <div class="control-group">
             <h4>前半アニメーション</h4>
             <label for="firstSpinDuration">前半のアニメ時間 (秒)</label>
-            <input type="range" id="firstSpinDuration" min="0.5" max="7" step="0.5" value="1.5" data-default-value="1.5">
+            <input type="range" id="firstSpinDuration" min="0.5" max="7" step="0.5" value="5" data-default-value="5">
             <span class="control-value" id="firstSpinDurationValue">
-                <span class="current-value">1.5秒</span>
-                <span class="default">(デフォルト: 1.5秒)</span>
+                <span class="current-value">5秒</span>
+                <span class="default">(デフォルト: 5秒)</span>
             </span>
         </div>
         
@@ -453,10 +454,10 @@
         <div class="control-group">
             <h4>後半アニメーション</h4>
             <label for="finalSpinDuration">後半のアニメ時間 (秒)</label>
-            <input type="range" id="finalSpinDuration" min="0.5" max="7" step="0.5" value="1" data-default-value="1">
+            <input type="range" id="finalSpinDuration" min="0.5" max="7" step="0.5" value="5" data-default-value="5">
             <span class="control-value" id="finalSpinDurationValue">
-                <span class="current-value">1秒</span>
-                <span class="default">(デフォルト: 1秒)</span>
+                <span class="current-value">5秒</span>
+                <span class="default">(デフォルト: 5秒)</span>
             </span>
         </div>
         
@@ -467,15 +468,6 @@
                 <span class="current-value">1回転</span>
                 <span class="default">(デフォルト: 1回転)</span>
             </span>
-        </div>
-    </div>
-
-    <div class="device-container" style="transform: translate(-50%, -50%) rotate(277.5deg);">
-        <div class="device" id="device">
-            <div class="inner-glow"></div>
-            <button class="start-button" id="startButton">
-                ●
-            </button>
         </div>
     </div>
 
@@ -563,7 +555,6 @@
                             slider.value = settings[key];
                         }
                     }
-                    // 初期表示を更新
                     this.setupControls();
                 }
             }
