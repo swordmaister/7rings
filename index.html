@@ -54,6 +54,9 @@
 
         .settings-button {
             position: absolute;
+            top: calc(50% + 15px); /* 縦位置を15pxに固定 */
+            left: calc(50% + -97px); /* 横位置を-97pxに固定 */
+            transform: translate(-50%, -50%);
             background: rgba(0, 0, 0, 0.8);
             border: 2px solid rgba(255, 255, 255, 0.2);
             border-radius: 50%;
@@ -73,11 +76,11 @@
         .settings-button:hover {
             background: rgba(0, 0, 0, 0.9);
             border-color: rgba(255, 255, 255, 0.4);
-            transform: scale(1.1);
+            transform: translate(-50%, -50%) scale(1.1);
         }
 
         .settings-button:active {
-            transform: scale(0.9);
+            transform: translate(-50%, -50%) scale(0.9);
         }
 
         .control-group {
@@ -464,25 +467,6 @@
                 <span class="default">(デフォルト: 1回転)</span>
             </span>
         </div>
-        
-        <div class="control-group">
-            <h4>設定ボタン位置</h4>
-            <label for="settingsButtonY">縦位置 (px)</label>
-            <input type="range" id="settingsButtonY" min="-150" max="150" step="1" value="120" data-default-value="120">
-            <span class="control-value" id="settingsButtonYValue">
-                <span class="current-value">120px</span>
-                <span class="default">(デフォルト: 120px)</span>
-            </span>
-        </div>
-
-        <div class="control-group">
-            <label for="settingsButtonX">横位置 (px)</label>
-            <input type="range" id="settingsButtonX" min="-150" max="150" step="1" value="0" data-default-value="0">
-            <span class="control-value" id="settingsButtonXValue">
-                <span class="current-value">0px</span>
-                <span class="default">(デフォルト: 0px)</span>
-            </span>
-        </div>
     </div>
 
     <div id="rotation-button" onclick="rotateScreen()"></div>
@@ -502,7 +486,6 @@
                 this.finalInterval = null;
                 this.startButton = document.getElementById('startButton');
                 this.device = document.getElementById('device');
-                this.settingsButton = document.querySelector('.settings-button');
                 this.init();
                 this.setupControls();
                 this.loadSettings();
@@ -525,9 +508,7 @@
                     { id: 'firstSpinDuration', valueId: 'firstSpinDurationValue', suffix: '秒' },
                     { id: 'firstSpinRotations', valueId: 'firstSpinRotationsValue', suffix: '回転' },
                     { id: 'finalSpinDuration', valueId: 'finalSpinDurationValue', suffix: '秒' },
-                    { id: 'finalSpinRotations', valueId: 'finalSpinRotationsValue', suffix: '回転' },
-                    { id: 'settingsButtonY', valueId: 'settingsButtonYValue', suffix: 'px' },
-                    { id: 'settingsButtonX', valueId: 'settingsButtonXValue', suffix: 'px' }
+                    { id: 'finalSpinRotations', valueId: 'finalSpinRotationsValue', suffix: '回転' }
                 ];
                 
                 controls.forEach(control => {
@@ -558,11 +539,8 @@
                     firstSpinRotations: this.getControlValue('firstSpinRotations', false),
                     finalSpinDuration: this.getControlValue('finalSpinDuration', false),
                     finalSpinRotations: this.getControlValue('finalSpinRotations', false),
-                    settingsButtonY: this.getControlValue('settingsButtonY', false),
-                    settingsButtonX: this.getControlValue('settingsButtonX', false)
                 };
                 localStorage.setItem('arcLedSettings', JSON.stringify(settings));
-                this.updateButtonPosition();
             }
             
             loadSettings() {
@@ -576,10 +554,6 @@
                         }
                     }
                     this.setupControls();
-                    this.updateButtonPosition();
-                } else {
-                    // デフォルト値がロードされた後、位置を初期化
-                    this.updateButtonPosition();
                 }
             }
 
@@ -591,15 +565,6 @@
                 });
                 this.setupControls();
                 this.saveSettings();
-            }
-            
-            updateButtonPosition() {
-                const yPos = this.getControlValue('settingsButtonY', false);
-                const xPos = this.getControlValue('settingsButtonX', false);
-                
-                this.settingsButton.style.top = `calc(50% + ${yPos}px)`;
-                this.settingsButton.style.left = `calc(50% + ${xPos}px)`;
-                this.settingsButton.style.transform = 'translate(-50%, -50%)';
             }
 
             getControlValue(id, inMilliseconds = true) {
