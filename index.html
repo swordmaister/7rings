@@ -42,12 +42,42 @@
         backdrop-filter: blur(10px);
         border: 1px solid rgba(255, 255, 255, 0.1);
         z-index: 1000;
-        display: flex;
         flex-direction: column;
         gap: 12px;
         font-size: 11px;
         max-height: calc(100vh - 40px);
         overflow-y: auto;
+        display: none;
+    }
+
+    .controls-panel.show {
+        display: flex;
+    }
+
+    .settings-button {
+        position: fixed;
+        top: 20px;
+        left: 20px;
+        width: 40px;
+        height: 40px;
+        background: rgba(0, 0, 0, 0.8);
+        border: 2px solid rgba(255, 255, 255, 0.2);
+        border-radius: 50%;
+        color: #fff;
+        font-size: 16px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1001;
+        transition: all 0.3s ease;
+        backdrop-filter: blur(5px);
+    }
+
+    .settings-button:hover {
+        background: rgba(0, 0, 0, 0.9);
+        border-color: rgba(255, 255, 255, 0.4);
+        transform: scale(1.1);
     }
 
     .control-group {
@@ -336,42 +366,44 @@
 
 </head>
 <body>
-    <div class="controls-panel">
-        <div class="control-group">
-            <label>長押しすべき時間 (ms)</label>
-            <input type="range" id="pressTime" min="1000" max="5000" step="100" value="2000">
-            <span class="control-value" id="pressTimeValue">2000ms</span>
-        </div>
+    <div class="settings-button" onclick="toggleSettings()">⚙️</div>
 
 
+<div class="controls-panel" id="controlsPanel">
     <div class="control-group">
-        <label>前半のアニメ時間 (ms)</label>
-        <input type="range" id="firstSpinDuration" min="500" max="3000" step="100" value="1500">
-        <span class="control-value" id="firstSpinDurationValue">1500ms</span>
+        <label>長押しすべき時間 (秒)</label>
+        <input type="range" id="pressTime" min="0" max="7" step="0.5" value="3">
+        <span class="control-value" id="pressTimeValue">3秒</span>
+    </div>
+    
+    <div class="control-group">
+        <label>前半のアニメ時間 (秒)</label>
+        <input type="range" id="firstSpinDuration" min="0" max="7" step="0.5" value="3">
+        <span class="control-value" id="firstSpinDurationValue">3秒</span>
     </div>
     
     <div class="control-group">
         <label>前半の回転回数</label>
-        <input type="range" id="firstSpinRotations" min="1" max="5" step="1" value="2">
-        <span class="control-value" id="firstSpinRotationsValue">2回転</span>
+        <input type="range" id="firstSpinRotations" min="0" max="10" step="1" value="1">
+        <span class="control-value" id="firstSpinRotationsValue">1回転</span>
     </div>
     
     <div class="control-group">
-        <label>後半のアニメ時間 (ms)</label>
-        <input type="range" id="finalSpinDuration" min="500" max="3000" step="100" value="1000">
-        <span class="control-value" id="finalSpinDurationValue">1000ms</span>
+        <label>後半のアニメ時間 (秒)</label>
+        <input type="range" id="finalSpinDuration" min="0" max="7" step="0.5" value="3">
+        <span class="control-value" id="finalSpinDurationValue">3秒</span>
     </div>
     
     <div class="control-group">
         <label>後半の追加回転回数</label>
-        <input type="range" id="finalSpinRotations" min="0" max="3" step="1" value="1">
+        <input type="range" id="finalSpinRotations" min="0" max="10" step="1" value="1">
         <span class="control-value" id="finalSpinRotationsValue">1回転</span>
     </div>
     
     <div class="control-group">
         <label>長押し中の回転回数</label>
-        <input type="range" id="pressRotations" min="1" max="5" step="1" value="2">
-        <span class="control-value" id="pressRotationsValue">2回転</span>
+        <input type="range" id="pressRotations" min="0" max="10" step="1" value="1">
+        <span class="control-value" id="pressRotationsValue">1回転</span>
     </div>
 </div>
 
@@ -417,10 +449,10 @@
 
         setupControls() {
             const controls = [
-                { id: 'pressTime', valueId: 'pressTimeValue', suffix: 'ms' },
-                { id: 'firstSpinDuration', valueId: 'firstSpinDurationValue', suffix: 'ms' },
+                { id: 'pressTime', valueId: 'pressTimeValue', suffix: '秒' },
+                { id: 'firstSpinDuration', valueId: 'firstSpinDurationValue', suffix: '秒' },
                 { id: 'firstSpinRotations', valueId: 'firstSpinRotationsValue', suffix: '回転' },
-                { id: 'finalSpinDuration', valueId: 'finalSpinDurationValue', suffix: 'ms' },
+                { id: 'finalSpinDuration', valueId: 'finalSpinDurationValue', suffix: '秒' },
                 { id: 'finalSpinRotations', valueId: 'finalSpinRotationsValue', suffix: '回転' },
                 { id: 'pressRotations', valueId: 'pressRotationsValue', suffix: '回転' }
             ];
@@ -436,7 +468,12 @@
         }
 
         getControlValue(id) {
-            return parseInt(document.getElementById(id).value);
+            const value = parseFloat(document.getElementById(id).value);
+            // 時間系のコントロールはミリ秒に変換
+            if (id.includes('Time') || id.includes('Duration')) {
+                return value * 1000;
+            }
+            return value;
         }
 
         createLEDs() {
@@ -667,6 +704,11 @@
     }
 
     let deviceRotation = 277.5;
+
+    function toggleSettings() {
+        const panel = document.getElementById('controlsPanel');
+        panel.classList.toggle('show');
+    }
 
     function rotateScreen() {
         deviceRotation += 45;
