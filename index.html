@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>arcLedR2</title>
+    <title>arcLed</title>
     <style>
         body {
             user-select: none;
@@ -459,63 +459,63 @@
         <div class="mode-controls">
             <h4>アニメーションモード</h4>
             <div class="mode-switch">
-                <button id="modeShadow" class="active" onclick="window.ledSequence.setAnimationMode('shadow')">走る影</button>
-                <button id="modeLight" onclick="window.ledSequence.setAnimationMode('light')">走る光</button>
+                <button id="modeShadow" onclick="window.ledSequence.setAnimationMode('shadow')">走る影</button>
+                <button id="modeLight" class="active" onclick="window.ledSequence.setAnimationMode('light')">走る光</button>
             </div>
         </div>
 
         <div class="control-group">
             <h4>アニメーション設定</h4>
             <label for="pressTime">長押しすべき時間 (秒)</label>
-            <input type="range" id="pressTime" min="0.5" max="7" step="0.5" value="5" data-default-value="5">
+            <input type="range" id="pressTime" min="0.5" max="7" step="0.5" value="6" data-default-value="6">
             <span class="control-value" id="pressTimeValue">
-                <span class="current-value">5秒</span>
-                <span class="default">(デフォルト: 5秒)</span>
+                <span class="current-value">6秒</span>
+                <span class="default">(デフォルト: 6秒)</span>
             </span>
         </div>
         
         <div class="control-group">
             <label for="pressRotations">長押し中の回転回数</label>
-            <input type="range" id="pressRotations" min="0" max="10" step="1" value="2" data-default-value="2">
+            <input type="range" id="pressRotations" min="0" max="10" step="1" value="5" data-default-value="5">
             <span class="control-value" id="pressRotationsValue">
-                <span class="current-value">2回転</span>
-                <span class="default">(デフォルト: 2回転)</span>
+                <span class="current-value">5回転</span>
+                <span class="default">(デフォルト: 5回転)</span>
             </span>
         </div>
 
         <div class="control-group">
             <label for="firstSpinDuration">前半のアニメ時間 (秒)</label>
-            <input type="range" id="firstSpinDuration" min="0.5" max="7" step="0.5" value="5" data-default-value="5">
+            <input type="range" id="firstSpinDuration" min="0.5" max="7" step="0.5" value="6" data-default-value="6">
             <span class="control-value" id="firstSpinDurationValue">
-                <span class="current-value">5秒</span>
-                <span class="default">(デフォルト: 5秒)</span>
+                <span class="current-value">6秒</span>
+                <span class="default">(デフォルト: 6秒)</span>
             </span>
         </div>
         
         <div class="control-group">
             <label for="firstSpinRotations">前半の回転回数</label>
-            <input type="range" id="firstSpinRotations" min="0" max="10" step="1" value="2" data-default-value="2">
+            <input type="range" id="firstSpinRotations" min="0" max="10" step="1" value="5" data-default-value="5">
             <span class="control-value" id="firstSpinRotationsValue">
-                <span class="current-value">2回転</span>
-                <span class="default">(デフォルト: 2回転)</span>
+                <span class="current-value">5回転</span>
+                <span class="default">(デフォルト: 5回転)</span>
             </span>
         </div>
         
         <div class="control-group">
             <label for="finalSpinDuration">後半のアニメ時間 (秒)</label>
-            <input type="range" id="finalSpinDuration" min="0.5" max="7" step="0.5" value="5" data-default-value="5">
+            <input type="range" id="finalSpinDuration" min="0.5" max="7" step="0.5" value="3" data-default-value="3">
             <span class="control-value" id="finalSpinDurationValue">
-                <span class="current-value">5秒</span>
-                <span class="default">(デフォルト: 5秒)</span>
+                <span class="current-value">3秒</span>
+                <span class="default">(デフォルト: 3秒)</span>
             </span>
         </div>
         
         <div class="control-group">
             <label for="finalSpinRotations">後半の追加回転回数</label>
-            <input type="range" id="finalSpinRotations" min="0" max="10" step="1" value="1" data-default-value="1">
+            <input type="range" id="finalSpinRotations" min="0" max="10" step="1" value="0" data-default-value="0">
             <span class="control-value" id="finalSpinRotationsValue">
-                <span class="current-value">1回転</span>
-                <span class="default">(デフォルト: 1回転)</span>
+                <span class="current-value">0回転</span>
+                <span class="default">(デフォルト: 0回転)</span>
             </span>
         </div>
     </div>
@@ -538,7 +538,7 @@
                 this.startButton = document.getElementById('startButton');
                 this.device = document.getElementById('device');
                 this.settingsButton = document.querySelector('.settings-button');
-                this.animationMode = 'shadow';
+                this.animationMode = 'light';
                 this.init();
                 this.setupControls();
                 this.loadSettings();
@@ -623,7 +623,7 @@
                     this.setupControls();
                 } else {
                     this.settingsButton.style.opacity = document.getElementById('settingsButtonOpacity').value;
-                    this.setAnimationMode('shadow');
+                    this.setAnimationMode('light'); // 変更後のデフォルトモード
                 }
             }
 
@@ -634,7 +634,7 @@
                     slider.value = defaultValue;
                 });
                 this.settingsButton.style.opacity = document.getElementById('settingsButtonOpacity').value;
-                this.setAnimationMode('shadow');
+                this.setAnimationMode('light'); // 変更後のデフォルトモード
                 this.setupControls();
                 this.saveSettings();
             }
@@ -854,13 +854,18 @@
                 const finalSpinSteps = (18 - currentIndex + randomTarget) % 18 + (additionalRotations * 18);
                 
                 const duration = this.getControlValue('finalSpinDuration');
-                const stepInterval = duration / finalSpinSteps;
+                const stepInterval = finalSpinSteps > 0 ? duration / finalSpinSteps : 0;
 
                 this.leds.forEach(led => {
                     led.classList.remove('dim');
                     led.classList.add('active');
                 });
                 
+                if (stepInterval === 0) {
+                    this.showFinalResult(currentIndex);
+                    return;
+                }
+
                 this.finalInterval = setInterval(() => {
                     const prevIndex = (currentIndex - 1 + 18) % 18;
                     this.leds[prevIndex].classList.remove('dim');
