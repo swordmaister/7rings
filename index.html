@@ -249,7 +249,7 @@
             position: absolute;
             width: var(--led-base-width); /* 変数を適用 */
             height: var(--led-base-height); /* 変数を適用 */
-            border-radius: 3px;
+            border-radius: calc(var(--led-base-width) / 2); /* 幅の半分にしてカプセル型を維持 */
             background: transparent;
             border: none;
             transition: all 0.15s ease;
@@ -262,7 +262,8 @@
             content: '';
             position: absolute;
             top: -5px;
-            left: calc((var(--led-base-width) - 12px) / 2); /* LED幅の中心を基準に計算 */
+            /* 親要素の中心に配置するための計算 */
+            left: calc((var(--led-base-width) - 12px) / 2); 
             width: 12px;
             height: calc(var(--led-base-height) + 10px);
             border-radius: 4px;
@@ -275,7 +276,8 @@
             content: '';
             position: absolute;
             top: 2px;
-            left: calc((var(--led-base-width) - 6px) / 2); /* LED幅の中心を基準に計算 */
+            /* 親要素の中心に配置するための計算 */
+            left: calc((var(--led-base-width) - 6px) / 2); 
             width: 6px;
             height: calc(var(--led-base-height) - 4px);
             border-radius: 2px;
@@ -594,7 +596,12 @@
             }
 
             init() {
+                // 初回createLEDsの前に、CSS変数を設定してDOM生成時のLED幅を正しく反映させる
+                const initialThickness = this.getControlValue('ledThicknessMultiplier', false) || 0.5;
+                this.updateLedThickness(initialThickness);
+                
                 this.createLEDs();
+                
                 this.startButton.addEventListener('mousedown', (e) => this.startPress(e));
                 this.startButton.addEventListener('mouseup', (e) => this.endPress(e));
                 this.startButton.addEventListener('mouseleave', (e) => this.endPress(e));
@@ -648,19 +655,24 @@
             
             updateLedThickness(multiplier) {
                 const newWidth = this.baseLedWidth * parseFloat(multiplier);
+                
+                // CSS変数に新しい幅を適用
                 this.root.style.setProperty('--led-base-width', `${newWidth}px`);
-                // LEDのX座標も再計算が必要なため、led要素のleftプロパティを更新
+                
+                // DOMが存在する場合（再描画時）、個々のLED要素のプロパティを更新
                 this.leds.forEach(led => {
-                    // ledが初期化されていれば、データ属性から元の角度と半径を取得
                     const angle = parseFloat(led.dataset.angle);
                     const radius = parseFloat(led.dataset.radius);
                     const centerX = 150;
                     
-                    // 新しい幅を考慮してLEDの中心を維持
+                    // 新しい幅を考慮してLEDの中心を円周上に維持
                     const radians = (angle * Math.PI) / 180;
                     const x = centerX + radius * Math.cos(radians) - (newWidth / 2); // 新しい幅の半分を引く
+                    
                     led.style.left = x + 'px';
                     led.style.width = `${newWidth}px`;
+                    
+                    // CSSのborder-radiusはCSS変数で計算されるので、ここではwidthとleftの更新のみ
                 });
             }
             
@@ -681,6 +693,8 @@
             
             loadSettings() {
                 const savedSettings = localStorage.getItem('arcLedSettings');
+                const ledThicknessMultiplierElement = document.getElementById('ledThicknessMultiplier');
+                
                 if (savedSettings) {
                     const settings = JSON.parse(savedSettings);
                     for (const key in settings) {
@@ -689,7 +703,7 @@
                             slider.value = settings[key];
                             if (key === 'settingsButtonOpacity') {
                                 this.settingsButton.style.opacity = settings[key];
-                            } else if (key === 'ledThicknessMultiplier') { // 追加
+                            } else if (key === 'ledThicknessMultiplier') {
                                 this.updateLedThickness(settings[key]);
                             }
                         }
@@ -697,12 +711,13 @@
                     if (settings.animationMode) {
                         this.setAnimationMode(settings.animationMode);
                     }
-                    this.setupControls();
                 } else {
+                    // 保存設定がない場合はデフォルト値を適用
                     this.settingsButton.style.opacity = document.getElementById('settingsButtonOpacity').value;
-                    this.updateLedThickness(document.getElementById('ledThicknessMultiplier').value); // 追加
+                    this.updateLedThickness(ledThicknessMultiplierElement.value);
                     this.setAnimationMode('light');
                 }
+                this.setupControls();
             }
 
             resetToDefault() {
@@ -712,14 +727,17 @@
                     slider.value = defaultValue;
                 });
                 this.settingsButton.style.opacity = document.getElementById('settingsButtonOpacity').value;
-                this.updateLedThickness(document.getElementById('ledThicknessMultiplier').value); // 追加
+                this.updateLedThickness(document.getElementById('ledThicknessMultiplier').value); // LED幅をデフォルトに戻す
                 this.setAnimationMode('light');
                 this.setupControls();
                 this.saveSettings();
             }
 
             getControlValue(id, inMilliseconds = true) {
-                const value = parseFloat(document.getElementById(id).value);
+                const element = document.getElementById(id);
+                if (!element) return id === 'ledThicknessMultiplier' ? 1.0 : 0; // fallback for initial call
+                
+                const value = parseFloat(element.value);
                 if (inMilliseconds && (id.includes('Time') || id.includes('Duration'))) {
                     return value * 1000;
                 }
@@ -741,7 +759,12 @@
                 const startAngle = 225;
                 const totalAngle = 270;
                 const angleStep = totalAngle / 18;
-                const ledWidth = this.baseLedWidth * this.getControlValue('ledThicknessMultiplier', false);
+                
+                // DOMを一旦クリア（リロード時のために）
+                this.leds.forEach(led => led.remove());
+                this.leds = [];
+                
+                const currentLedWidth = this.baseLedWidth * this.getControlValue('ledThicknessMultiplier', false);
                 
                 for (let i = 0; i < 18; i++) {
                     const angle = startAngle + (i * angleStep);
@@ -756,14 +779,14 @@
                     
                     const radians = (angle * Math.PI) / 180;
                     // LEDの中心を維持するようにleftを計算
-                    const x = centerX + radius * Math.cos(radians) - (ledWidth / 2); 
+                    const x = centerX + radius * Math.cos(radians) - (currentLedWidth / 2); 
                     const y = centerY + radius * Math.sin(radians) - 12;
                     
                     led.style.left = x + 'px';
                     led.style.top = y + 'px';
                     
                     // 初期幅を設定
-                    led.style.width = `${ledWidth}px`;
+                    led.style.width = `${currentLedWidth}px`;
                     
                     const rotation = angle + 180;
                     led.style.transform = `rotate(${rotation}deg)`;
@@ -771,7 +794,6 @@
                     this.leds.push(led);
                 }
             }
-            /* ... (以降のメソッドは変更なし、または微調整のみでロジックに大きな変更はありません) ... */
 
             startPress(e) {
                 e.preventDefault();
