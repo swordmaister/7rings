@@ -226,6 +226,29 @@
         .start-button:hover { background: linear-gradient(145deg, #333, #1a1a1a); transform: translate(-50%,-50%) translateX(3px); }
         .start-button:disabled { cursor: default; }
 
+        /* ▼▼▼ 待機中の赤い四角LED ▼▼▼ */
+        .start-button.waiting {
+            color: transparent;
+        }
+        .start-button.waiting::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 10px;
+            height: 10px;
+            background-color: #ff2222;
+            box-shadow: 0 0 8px #ff0000;
+            border-radius: 2px;
+            animation: blink-fast 0.15s infinite alternate;
+        }
+        @keyframes blink-fast {
+            from { opacity: 1; }
+            to { opacity: 0.2; }
+        }
+        /* ▲▲▲ */
+
         .inner-glow {
             position:absolute;
             top:50%;
@@ -360,7 +383,6 @@
                 this.startButton = document.getElementById('startButton');
                 this.device = document.getElementById('device');
                 this.settingsButton = document.querySelector('.settings-button');
-                // 修正: 初期アニメーションモードを 'light' に設定
                 this.animationMode = 'light'; 
                 this.baseLedWidth = 8;
                 this.root = document.documentElement;
@@ -375,7 +397,9 @@
                 this.updateLedThickness(initialThickness);
                 this.createLEDs();
 
-                // ボタンのイベント
+                // 初期状態で待機モード（赤い四角点滅）
+                this.startButton.classList.add('waiting');
+
                 this.startButton.addEventListener('mousedown', (e)=>this.startPress(e));
                 this.startButton.addEventListener('mouseup', (e)=>this.endPress(e));
                 this.startButton.addEventListener('mouseleave', (e)=>this.endPress(e));
@@ -495,7 +519,6 @@
                     if (opacityEl) this.settingsButton.style.opacity = opacityEl.value;
                     const ledEl = document.getElementById('ledThicknessMultiplier');
                     if (ledEl) this.updateLedThickness(ledEl.value);
-                    // 修正: デフォルトを light に設定
                     this.setAnimationMode('light', false); 
                 }
                 this.setupControls();
@@ -559,6 +582,10 @@
 
                 this.reset();
                 this.isRunning = true;
+                
+                // デモ開始時は待機ライトを消す
+                this.startButton.classList.remove('waiting');
+                
                 this.startButton.disabled = false;
                 this.device.classList.add('has-active-leds');
                 this.startButton.style.background = 'linear-gradient(145deg, #00aa66, #006644)';
@@ -591,6 +618,10 @@
                 this.startButton.style.background = '';
                 this.device.classList.remove('has-active-leds');
                 this.leds.forEach(led => { led.classList.remove('active','dim','blinking'); });
+                
+                // デモ停止時は待機ライトを戻す
+                this.startButton.classList.add('waiting');
+                
                 this.updateButtonText();
             }
 
@@ -662,7 +693,10 @@
                 }
                 if (this.isPressing) return;
                 this.isPressing = true;
-                this.startButton.style.background = 'linear-gradient(145deg, #00aa66, #006644)';
+                
+                // 長押し中も待機状態(waiting)は維持（赤点滅継続）
+                // ボタンの背景色変更などのエフェクトは不要
+
                 this.lightAllLEDs();
                 this.startPressAnimation();
                 const pressTime = this.getControlValue('pressTime');
@@ -724,7 +758,14 @@
                 this.isRunning = true;
                 this.isPressing = false;
                 this.startButton.disabled = true;
+                
+                // ▼▼▼ 修正: ここではまだ待機ライト(赤点滅)を消さない（前半アニメ中も継続） ▼▼▼
+                // this.startButton.classList.remove('waiting'); // 削除
+                
+                // 文字を消して準備
+                this.startButton.textContent = ''; 
                 this.startButton.style.background = '';
+
                 if (this.pressAnimationInterval) { clearInterval(this.pressAnimationInterval); this.pressAnimationInterval = null; }
                 if (this.autoStartTimer) { clearTimeout(this.autoStartTimer); this.autoStartTimer = null; }
                 this.startSpinSequence();
@@ -749,7 +790,17 @@
                         this.leds[this.currentRotatingIndex].classList.remove('active'); this.leds[this.currentRotatingIndex].classList.add('dim');
                         this.currentRotatingIndex = (this.currentRotatingIndex + 1) % 18;
                         stepCount++;
-                        if (stepCount >= totalSteps) { clearInterval(this.rotationInterval); this.rotationInterval = null; this.finalSpin(); }
+                        
+                        if (stepCount >= totalSteps) { 
+                            clearInterval(this.rotationInterval); 
+                            this.rotationInterval = null; 
+                            
+                            // ▼▼▼ 修正: 前半アニメ終了時に待機ライトを消す ▼▼▼
+                            this.startButton.classList.remove('waiting');
+                            // ▲▲▲
+                            
+                            this.finalSpin(); 
+                        }
                     }, stepDuration);
                 } else {
                     // 走る光
@@ -762,7 +813,17 @@
                         }
                         this.currentRotatingIndex = (this.currentRotatingIndex + 1) % 18;
                         stepCount++;
-                        if (stepCount >= totalSteps) { clearInterval(this.rotationInterval); this.rotationInterval = null; this.finalSpin(); }
+                        
+                        if (stepCount >= totalSteps) { 
+                            clearInterval(this.rotationInterval); 
+                            this.rotationInterval = null; 
+                            
+                            // ▼▼▼ 修正: 前半アニメ終了時に待機ライトを消す ▼▼▼
+                            this.startButton.classList.remove('waiting');
+                            // ▲▲▲
+                            
+                            this.finalSpin(); 
+                        }
                     }, stepDuration);
                 }
             }
@@ -812,6 +873,10 @@
                 this.isRunning = false;
                 this.isFinished = false;
                 this.startButton.disabled = false;
+                
+                // リセットで待機モード（赤いLED）に戻す
+                this.startButton.classList.add('waiting');
+
                 this.startButton.style.background = '';
                 this.device.classList.remove('has-active-leds');
 
